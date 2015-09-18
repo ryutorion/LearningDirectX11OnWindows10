@@ -1,4 +1,4 @@
-// 012_RasterizerState.cpp
+// 013_BlendState.cpp
 #include <Windows.h>
 #include <tchar.h>
 #include <iostream>
@@ -38,6 +38,7 @@ ComPtr<ID3D11Texture2D> gpTexture;
 ComPtr<ID3D11ShaderResourceView> gpTextureRV;
 ComPtr<ID3D11SamplerState> gpSampler;
 ComPtr<ID3D11RasterizerState2> gpRasterizerState;
+ComPtr<ID3D11BlendState1> gpBlendState;
 
 struct Vertex
 {
@@ -332,7 +333,7 @@ bool OnCreate(HWND hWnd)
         ComPtr<ID3DBlob> pErrorBlob;
 
         hr = D3DCompileFromFile(
-            L"012.hlsl",
+            L"013.hlsl",
             nullptr,
             nullptr,
             "VS",
@@ -395,7 +396,7 @@ bool OnCreate(HWND hWnd)
         ComPtr<ID3DBlob> pErrorBlob;
 
         hr = D3DCompileFromFile(
-            TEXT("012.hlsl"),
+            TEXT("013.hlsl"),
             nullptr,
             nullptr,
             "PS",
@@ -529,20 +530,25 @@ bool OnCreate(HWND hWnd)
         // Texture2DDesc.MiscFlags = 0;
 
         uint32_t texture[128][128];
+        uint32_t color1 = ~0u ^ (0xff << 8);
+        uint32_t color2 = 0 | (0xff << 16);
         for(auto h = 0; h < 128; ++h)
         {
+            auto r = h / 16;
             for(auto w = 0; w < 128; ++w)
             {
-                if((w & 1 + h & 1) & 1)
+                auto c = w / 16;
+                if((c & 1 + r & 1) & 1)
                 {
-                    texture[h][w] = ~0u;
+                    texture[h][w] = color1;
                 }
                 else
                 {
-                    texture[h][w] = 0;
+                    texture[h][w] = color2;
                 }
             }
         }
+
 
         D3D11_SUBRESOURCE_DATA TextureData {};
         TextureData.pSysMem = texture;
@@ -622,6 +628,49 @@ bool OnCreate(HWND hWnd)
         }
     }
 
+    // BlendStateの生成
+    {
+        D3D11_BLEND_DESC1 BlendDesc {};
+        // デフォルト設定
+        // BlendDesc.AlphaToCoverageEnable = FALSE;
+        // BlendDesc.IndependentBlendEnable = FALSE;
+        // for(auto & RTBlendDesc : BlendDesc.RenderTarget)
+        // {
+        //     RTBlendDesc.BlendEnable = FALSE;
+        //     RTBlendDesc.LogicOpEnable = FALSE;
+        //     RTBlendDesc.SrcBlend = D3D11_BLEND_ONE;
+        //     RTBlendDesc.DestBlend = D3D11_BLEND_ZERO;
+        //     RTBlendDesc.BlendOp = D3D11_BLEND_OP_ADD;
+        //     RTBlendDesc.SrcBlendAlpha = D3D11_BLEND_ONE;
+        //     RTBlendDesc.DestBlendAlpha = D3D11_BLEND_ZERO;
+        //     RTBlendDesc.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        //     RTBlendDesc.LogicOp = D3D11_LOGIC_OP_NOOP;
+        //     RTBlendDesc.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+        // }
+        BlendDesc.AlphaToCoverageEnable = FALSE;
+        BlendDesc.IndependentBlendEnable = FALSE;
+
+        // ブレンドファクターの有効無効および値の指定
+        auto & RTBlendDesc = BlendDesc.RenderTarget[0];
+        RTBlendDesc.BlendEnable = TRUE;
+        RTBlendDesc.LogicOpEnable = FALSE;
+        RTBlendDesc.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+        RTBlendDesc.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+        RTBlendDesc.BlendOp = D3D11_BLEND_OP_ADD;
+        RTBlendDesc.SrcBlendAlpha = D3D11_BLEND_ONE;
+        RTBlendDesc.DestBlendAlpha = D3D11_BLEND_ZERO;
+        RTBlendDesc.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        RTBlendDesc.LogicOp = D3D11_LOGIC_OP_NOOP;
+        RTBlendDesc.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+        hr = gpDevice->CreateBlendState1(&BlendDesc, gpBlendState.GetAddressOf());
+        if(FAILED(hr))
+        {
+            PrintSystemError(hr);
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -662,15 +711,25 @@ void OnUpdate()
 void OnRender()
 {
     // レンダーターゲットのクリア
-    float clearColor[] = { 0.f, 0.f, 0.f, 1.f };
+    float clearColor[] = { 0.0f, 1.0f, 0.0f, 1.0f };
     gpImmediateContext->ClearRenderTargetView(gpRTV.Get(), clearColor);
 
+    // Vertex Shader Stageの設定
     gpImmediateContext->VSSetShader(gpVertexShader.Get(), nullptr, 0);
     gpImmediateContext->VSSetConstantBuffers(0, 1, gpConstantBuffer.GetAddressOf());
+
+    // Rasterizer Stageの設定
+    gpImmediateContext->RSSetState(gpRasterizerState.Get());
+
+    // Pixel Shader Stageの設定
     gpImmediateContext->PSSetShader(gpPixelShader.Get(), nullptr, 0);
     gpImmediateContext->PSSetShaderResources(0, 1, gpTextureRV.GetAddressOf());
     gpImmediateContext->PSSetSamplers(0, 1, gpSampler.GetAddressOf());
-    gpImmediateContext->RSSetState(gpRasterizerState.Get());
+
+    // Output Merger Stageの設定
+    gpImmediateContext->OMSetBlendState(gpBlendState.Get(), nullptr, ~0u);
+
+
     gpImmediateContext->DrawIndexed(6, 0, 0);
 
     // 画面へ表示
