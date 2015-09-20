@@ -1,8 +1,12 @@
-cbuffer ConstantBuffer
+cbuffer ConstantBuffer : register(b0)
 {
     float4x4 Model;
     float4x4 View;
     float4x4 Projection;
+}
+
+cbuffer LightBuffer : register(b1)
+{
     float3   LightDir;
     float3   LightColor;
 }

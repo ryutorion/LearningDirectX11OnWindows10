@@ -34,6 +34,7 @@ ComPtr<ID3D11InputLayout> gpInputLayout;
 ComPtr<ID3D11Buffer> gpVertexBuffer;
 ComPtr<ID3D11Buffer> gpIndexBuffer;
 ComPtr<ID3D11Buffer> gpConstantBuffer;
+ComPtr<ID3D11Buffer> gpLightBuffer;
 ComPtr<ID3D11Texture2D> gpTexture;
 ComPtr<ID3D11ShaderResourceView> gpTextureRV;
 ComPtr<ID3D11SamplerState> gpSampler;
@@ -51,6 +52,10 @@ struct ConstantBuffer
     XMMATRIX Model;
     XMMATRIX View;
     XMMATRIX Projection;
+};
+
+struct LightBuffer
+{
     XMFLOAT3 LightDir;
     XMFLOAT3 LightColor;
 };
@@ -563,11 +568,19 @@ bool OnCreate(HWND hWnd)
     // 定数バッファの生成
     {
         D3D11_BUFFER_DESC BufferDesc {};
-        BufferDesc.ByteWidth = sizeof(ConstantBuffer);
+        BufferDesc.ByteWidth = (sizeof(ConstantBuffer) + 15) & ~0xf;
         BufferDesc.Usage = D3D11_USAGE_DYNAMIC;
         BufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         BufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         hr = gpDevice->CreateBuffer(&BufferDesc, nullptr, gpConstantBuffer.GetAddressOf());
+        if(FAILED(hr))
+        {
+            PrintSystemError(hr);
+            return false;
+        }
+
+        BufferDesc.ByteWidth = (sizeof(LightBuffer) + 15) & ~0xf;
+        hr = gpDevice->CreateBuffer(&BufferDesc, nullptr, gpLightBuffer.GetAddressOf());
         if(FAILED(hr))
         {
             PrintSystemError(hr);
@@ -751,6 +764,13 @@ void OnUpdate()
     static float fov = 45.0f;
     static auto worldLightDir = XMVector3Normalize(XMVectorSet(1.0f, 1.0f, 0.0f, 0.0f));
 
+    ConstantBuffer CB {};
+    CB.Model = DirectX::XMMatrixRotationY(phi) * DirectX::XMMatrixRotationX(theta);
+    phi += 0.0015f;
+    theta += 0.0015f;
+    CB.View = DirectX::XMMatrixLookAtRH(Eye, At, Up);
+    CB.Projection = DirectX::XMMatrixPerspectiveFovRH(fov, aspect, nearPlane, farPlane);
+
     D3D11_MAPPED_SUBRESOURCE resource;
     hr = gpImmediateContext->Map(gpConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
     if(FAILED(hr))
@@ -759,22 +779,26 @@ void OnUpdate()
         return;
     }
 
-    ConstantBuffer CB;
-    CB.Model = DirectX::XMMatrixRotationY(phi) * DirectX::XMMatrixRotationX(theta);
-    phi += 0.0015f;
-    theta += 0.0015f;
-    CB.View = DirectX::XMMatrixLookAtRH(Eye, At, Up);
-    CB.Projection = DirectX::XMMatrixPerspectiveFovRH(fov, aspect, nearPlane, farPlane);
-
-    auto localLightDir = XMVector3TransformCoord(worldLightDir, XMMatrixInverse(nullptr, CB.Model));
-
-    CB.LightDir.x = XMVectorGetX(localLightDir);
-    CB.LightDir.y = XMVectorGetY(localLightDir);
-    CB.LightDir.z = XMVectorGetZ(localLightDir);
-    CB.LightColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
-
     memcpy(resource.pData, &CB, sizeof CB);
     gpImmediateContext->Unmap(gpConstantBuffer.Get(), 0);
+
+    LightBuffer LB {};
+    auto localLightDir = XMVector3TransformCoord(worldLightDir, XMMatrixInverse(nullptr, CB.Model));
+
+    LB.LightDir.x = XMVectorGetX(localLightDir);
+    LB.LightDir.y = XMVectorGetY(localLightDir);
+    LB.LightDir.z = XMVectorGetZ(localLightDir);
+    LB.LightColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
+
+    hr = gpImmediateContext->Map(gpLightBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+    if(FAILED(hr))
+    {
+        PrintSystemError(hr);
+        return;
+    }
+
+    memcpy(resource.pData, &LB, sizeof LB);
+    gpImmediateContext->Unmap(gpLightBuffer.Get(), 0);
 }
 
 void OnRender()
@@ -794,7 +818,7 @@ void OnRender()
     gpImmediateContext->PSSetShader(gpPixelShader.Get(), nullptr, 0);
     gpImmediateContext->PSSetShaderResources(0, 1, gpTextureRV.GetAddressOf());
     gpImmediateContext->PSSetSamplers(0, 1, gpSampler.GetAddressOf());
-    gpImmediateContext->PSSetConstantBuffers(0, 1, gpConstantBuffer.GetAddressOf());
+    gpImmediateContext->PSSetConstantBuffers(1, 1, gpLightBuffer.GetAddressOf());
 
     // Output Merger Stageの設定
     gpImmediateContext->OMSetBlendState(gpBlendState.Get(), nullptr, ~0u);
