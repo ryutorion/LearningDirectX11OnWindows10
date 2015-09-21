@@ -56,9 +56,9 @@ struct ConstantBuffer
 
 struct LightBuffer
 {
-    XMFLOAT3 LightDir;
-    XMFLOAT3 LightColor;
-    XMFLOAT3 AmbientColor;
+    XMFLOAT3A LightDir;
+    XMFLOAT3A LightColor;
+    XMFLOAT3A AmbientColor;
 };
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdShow)
@@ -789,8 +789,8 @@ void OnUpdate()
     LB.LightDir.x = XMVectorGetX(localLightDir);
     LB.LightDir.y = XMVectorGetY(localLightDir);
     LB.LightDir.z = XMVectorGetZ(localLightDir);
-    LB.LightColor = XMFLOAT3(0.5f, 0.5f, 1.0f);
-    LB.AmbientColor = XMFLOAT3(0.3f, 0.3f, 0.3f);
+    LB.LightColor = XMFLOAT3A(0.5f, 0.5f, 0.0f);
+    LB.AmbientColor = XMFLOAT3A(0.2f, 0.2f, 0.2f);
 
     hr = gpImmediateContext->Map(gpLightBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
     if(FAILED(hr))
