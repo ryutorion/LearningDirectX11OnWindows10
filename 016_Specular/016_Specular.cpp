@@ -1,4 +1,4 @@
-// 016_AmbientLight.cpp
+// 016_Specular.cpp
 #include <Windows.h>
 #include <tchar.h>
 #include <iostream>
