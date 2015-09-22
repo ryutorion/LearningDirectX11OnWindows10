@@ -37,6 +37,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "015_AmbientLight", "015_Amb
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "016_Specular", "016_Specular\016_Specular.vcxproj", "{986A2AE9-0184-441E-A58A-EDFAA96B1DE7}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "017_CookTorrance", "017_CookTorrance\017_CookTorrance.vcxproj", "{A1C4DB43-3224-4D22-A023-8237E3DD60AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -181,6 +183,14 @@ Global
 		{986A2AE9-0184-441E-A58A-EDFAA96B1DE7}.Release|x64.Build.0 = Release|x64
 		{986A2AE9-0184-441E-A58A-EDFAA96B1DE7}.Release|x86.ActiveCfg = Release|Win32
 		{986A2AE9-0184-441E-A58A-EDFAA96B1DE7}.Release|x86.Build.0 = Release|Win32
+		{A1C4DB43-3224-4D22-A023-8237E3DD60AE}.Debug|x64.ActiveCfg = Debug|x64
+		{A1C4DB43-3224-4D22-A023-8237E3DD60AE}.Debug|x64.Build.0 = Debug|x64
+		{A1C4DB43-3224-4D22-A023-8237E3DD60AE}.Debug|x86.ActiveCfg = Debug|Win32
+		{A1C4DB43-3224-4D22-A023-8237E3DD60AE}.Debug|x86.Build.0 = Debug|Win32
+		{A1C4DB43-3224-4D22-A023-8237E3DD60AE}.Release|x64.ActiveCfg = Release|x64
+		{A1C4DB43-3224-4D22-A023-8237E3DD60AE}.Release|x64.Build.0 = Release|x64
+		{A1C4DB43-3224-4D22-A023-8237E3DD60AE}.Release|x86.ActiveCfg = Release|Win32
+		{A1C4DB43-3224-4D22-A023-8237E3DD60AE}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
