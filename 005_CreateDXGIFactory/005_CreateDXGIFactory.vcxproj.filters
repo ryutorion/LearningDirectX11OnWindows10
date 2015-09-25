@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="010_DrawTextureWithSampler.cpp">
+    <ClCompile Include="005_CreateDXGIFactory.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\UsingConsole.cpp">
@@ -26,10 +26,5 @@
     <ClInclude Include="..\Common\UsingConsole.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="010.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </None>
   </ItemGroup>
 </Project>

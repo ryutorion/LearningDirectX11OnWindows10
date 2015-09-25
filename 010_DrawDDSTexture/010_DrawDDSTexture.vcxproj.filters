@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="010_DrawTextureWithSampler.cpp">
+    <ClCompile Include="010_DrawDDSTexture.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\UsingConsole.cpp">
@@ -28,8 +28,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="010.hlsl">
+    <FxCompile Include="010_DDS.hlsl">
       <Filter>リソース ファイル</Filter>
-    </None>
+    </FxCompile>
   </ItemGroup>
 </Project>
